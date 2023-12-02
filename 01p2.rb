@@ -1,5 +1,3 @@
-start = Time.now
-
 input = File.open("inputs/1p2-sample.txt")
 input = File.open("inputs/1.txt")
 
