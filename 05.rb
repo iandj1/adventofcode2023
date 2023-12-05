@@ -3,14 +3,14 @@ input = File.open("inputs/5.txt")
 
 
 class ResourceMap
-  @@all_res_maps = []
+  @@all_res_maps = {} # from => object
 
   attr_accessor :from, :to
   def self.all_maps
     @@all_res_maps
   end
   def self.next_map(resource)
-    @@all_res_maps.detect{|res_map| res_map.from == resource}
+    @@all_res_maps[resource]
   end
   def self.calculate_resource(source_name, dest_name, number)
     while source_name != dest_name
@@ -24,7 +24,7 @@ class ResourceMap
     name.chomp!(' map:')
     @from, _, @to = name.split('-')
     @maps = []
-    @@all_res_maps << self
+    @@all_res_maps[@from] = self
   end
   def to_s
     "#{@from} to #{@to} map"
