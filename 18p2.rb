@@ -1,5 +1,5 @@
 input = File.open("inputs/18-sample.txt")
-# input = File.open("inputs/18.txt")
+input = File.open("inputs/18.txt")
 
 coord = [0,0]
 dir_lookup = {
@@ -41,21 +41,58 @@ input.each_with_index do |line, index|
     end
   end
 end
-interesting_rows.sort!
+interesting_rows.sort!.uniq!
 
-pp horizontal_ranges
-pp vertical_ranges
+def row_total(horizontal_ranges, vertical_ranges, row)
+  relevant_horizontals = horizontal_ranges.select{|h_range| h_range[0] == row}.map(&:last).sort_by{|range| range.first}
+  intersecting_verticals = vertical_ranges.select{|v_range| v_range[0].cover?(row) && !([v_range[0].first, v_range[0].last].include?(row))}.map(&:last).sort
+  row_sum = 0
 
-pp interesting_rows
+  inside = false
+  start = nil
+  while !relevant_horizontals.empty? || !intersecting_verticals.empty?
+    if relevant_horizontals.empty? || (!intersecting_verticals.empty? && intersecting_verticals.first < relevant_horizontals.first.first) # crossing vertical wall
+      if inside
+        row_sum += (intersecting_verticals.shift - start + 1)
+      else
+        start = intersecting_verticals.shift
+      end
+      inside = !inside
+    else # passing through horizontal wall
+      h_range = relevant_horizontals.shift
+      start_dir = vertical_ranges.select{|v_range| v_range[0].first == row && v_range[1] == h_range.first}.empty? ? :up : :down
+      end_dir = vertical_ranges.select{|v_range| v_range[0].first == row && v_range[1] == h_range.last}.empty? ? :up : :down
+      if start_dir != end_dir
+        if inside
+          row_sum += (h_range.first - start)
+        else
+          start = h_range.last + 1
+        end
+        row_sum += h_range.size
+        inside = !inside
+      else
+        row_sum += h_range.size if !inside
+      end
+    end
+  end
+  row_sum
+end
 
 sum = 0
-interesting_rows.each do |interesting_row|
+while !interesting_rows.empty?
+  row = interesting_rows.shift
+
   # add holes in this row
+  row_total = row_total(horizontal_ranges, vertical_ranges, row)
+  sum += row_total
 
   # add holes in following row * length of next run
-  # skip this if interesting_row == interesting_rows[-1]
+  next_interesting_row = interesting_rows[0]
+  next_row = row + 1
+  break if next_interesting_row.nil? # skip this if we're on the last row
+  next if next_row == next_interesting_row # also skip if next row is also interesting
+  next_row_total = row_total(horizontal_ranges, vertical_ranges, next_row)
+  sum += (next_row_total * (next_interesting_row - next_row))
 end
 
 puts "part 2: #{sum}"
-
-puts interesting_rows.count
